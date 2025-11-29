@@ -4,7 +4,7 @@ import logging
 import re
 from typing import Any, Dict, List
 
-from langchain_classic.chains import RetrievalQA
+from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.documents import Document
