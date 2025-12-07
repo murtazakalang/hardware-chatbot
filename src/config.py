@@ -18,8 +18,8 @@ CHUNK_OVERLAP = 200
 
 # RAG Pipeline Configuration
 LLM_MODEL = "gpt-5-mini"
-LLM_TEMPERATURE = 0.1
-LLM_MAX_TOKENS = 1000
+LLM_TEMPERATURE = 1.0  # GPT-5 mini requires default temperature
+LLM_MAX_TOKENS = 1200
 TOP_K_RESULTS = 10
 
 # Streamlit Configuration

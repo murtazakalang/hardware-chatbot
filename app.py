@@ -136,11 +136,7 @@ def initialize_session_state():
     if "db_initialized" not in st.session_state:
         st.session_state.db_initialized = False
 
-    if "last_temperature" not in st.session_state:
-        st.session_state.last_temperature = 0.1
 
-    if "last_k_value" not in st.session_state:
-        st.session_state.last_k_value = 5
 
 
 def display_sidebar():
@@ -179,24 +175,13 @@ def display_sidebar():
 
         # RAG settings
         st.subheader("RAG Configuration")
-        k_value = st.slider(
-            "Number of results to retrieve",
-            min_value=3,
-            max_value=10,
-            value=5,
-            step=1,
-            help="Higher values retrieve more context but may include less relevant info"
-        )
-
-        temperature = st.slider(
-            "Temperature (Creativity)",
-            min_value=0.0,
-            max_value=1.0,
-            value=st.session_state.get("last_temperature", 0.1),
-            step=0.1,
-            help="Lower values make the response more focused and deterministic"
-        )
-
+        st.info("Using optimized settings for GPT-5 mini:")
+        st.markdown("""
+        - **Model**: GPT-5 Mini
+        - **Results**: Top 10 matches
+        - **Creativity**: Default (1.0)
+        """)
+        
         st.divider()
 
         # About section
@@ -207,17 +192,11 @@ def display_sidebar():
         **Features:**
         - Semantic search across 50+ PDF catalogs
         - Page-accurate citations
-        - Powered by GPT-4 and ChromaDB
+        - Powered by GPT-5 and ChromaDB
         """)
 
         st.markdown("---")
         st.caption("Made with Streamlit & LangChain")
-
-        # Store current values in session state for use in queries
-        st.session_state.current_temperature = temperature
-        st.session_state.current_k_value = k_value
-        st.session_state.last_temperature = temperature
-        st.session_state.last_k_value = k_value
 
 
 def display_chat_interface():
@@ -258,13 +237,9 @@ def display_chat_interface():
             try:
                 with st.spinner("🔍 Searching catalogs..."):
                     # Get current settings from session state
-                    current_temperature = st.session_state.get("current_temperature", 0.1)
-                    current_k_value = st.session_state.get("current_k_value", 5)
                     response = query_rag(
                         st.session_state.rag_chain,
-                        prompt,
-                        temperature=current_temperature,
-                        top_k=current_k_value
+                        prompt
                     )
 
                 answer = response["answer"]
