@@ -3,12 +3,10 @@
 import logging
 from pathlib import Path
 from typing import List
-
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
-
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from src.config import PDF_DIRECTORY, CHUNK_SIZE, CHUNK_OVERLAP
+import pdfplumber
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -16,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 def load_pdfs_from_directory(directory_path: str = None) -> List[Document]:
     """
-    Load all PDFs from specified directory with page metadata.
+    Load all PDFs from specified directory with page metadata and explicit table extraction.
 
     Args:
         directory_path: Path to directory containing PDFs. Defaults to config PDF_DIRECTORY.
@@ -56,18 +54,53 @@ def load_pdfs_from_directory(directory_path: str = None) -> List[Document]:
     documents = []
     for pdf_file in sorted(pdf_files):
         try:
-            logger.info(f"Loading PDF: {pdf_file.name}")
-            loader = PyPDFLoader(str(pdf_file))
-            docs = loader.load()
+            logger.info(f"Processing PDF with Table Extraction: {pdf_file.name}")
+            
+            with pdfplumber.open(pdf_file) as pdf:
+                for i, page in enumerate(pdf.pages):
+                    # 1. Extract raw text
+                    text = page.extract_text() or ""
+                    
+                    # 2. Extract tables and convert to Markdown
+                    tables = page.extract_tables()
+                    table_content = ""
+                    if tables:
+                        table_content = "\n\n### EXTRACTED TABLES ###\n"
+                        for table in tables:
+                            # Filter out empty rows/tables
+                            clean_table = [[str(cell or "").replace("\n", " ").strip() for cell in row] for row in table]
+                            clean_table = [row for row in clean_table if any(row)]
+                            
+                            if clean_table:
+                                # Convert to markdown table format
+                                # | Header 1 | Header 2 |
+                                # | --- | --- |
+                                # | Row 1 | Row 1 |
+                                try:
+                                    # Use first row as header if it looks like one, or just dump data
+                                    # Simple markdown dump:
+                                    for row in clean_table:
+                                        table_content += "| " + " | ".join(row) + " |\n"
+                                    table_content += "\n"
+                                except Exception as table_err:
+                                    logger.warning(f"Error formatting table on page {i}: {table_err}")
 
-            # PyPDFLoader automatically adds 'page' metadata to each document
-            # Each page is a separate document
-            for doc in docs:
-                doc.metadata["source"] = pdf_file.name
-                doc.metadata["source_path"] = str(pdf_file)
-
-            documents.extend(docs)
-            logger.info(f"Successfully loaded {pdf_file.name} ({len(docs)} pages)")
+                    # 3. Combine Text and Tables
+                    # We emphasize tables by putting them clearly in the content
+                    full_content = text + table_content
+                    
+                    # 4. Create Document
+                    doc = Document(
+                        page_content=full_content,
+                        metadata={
+                            "source": pdf_file.name,
+                            "source_path": str(pdf_file),
+                            "page": i + 1, # Use 1-based indexing for user friendly display
+                        }
+                    )
+                    documents.append(doc)
+            
+            logger.info(f"Successfully loaded {pdf_file.name} ({len(pdf.pages)} pages)")
 
         except Exception as e:
             logger.error(f"Error loading {pdf_file.name}: {str(e)}")

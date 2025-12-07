@@ -58,10 +58,21 @@ def initialize_vector_store(
     Returns:
         Initialized Chroma vector store instance.
     """
+    import shutil
+
     if persist_directory is None:
         persist_directory = CHROMA_PERSIST_DIRECTORY
 
     persist_directory = Path(persist_directory)
+    
+    # If forced reprocess, properly clear existing database
+    if force_reprocess and persist_directory.exists():
+        logger.warning(f"Force reprocess enabled: Deleting existing ChromaDB at {persist_directory}")
+        if persist_directory.is_dir():
+            shutil.rmtree(persist_directory)
+        else:
+            persist_directory.unlink()
+
     persist_directory.mkdir(parents=True, exist_ok=True)
 
     logger.info(f"Initializing vector store at {persist_directory}")

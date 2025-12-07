@@ -16,8 +16,12 @@ from src.config import LLM_MODEL, LLM_TEMPERATURE, LLM_MAX_TOKENS, TOP_K_RESULTS
 logger = logging.getLogger(__name__)
 
 # Custom prompt template for the RAG chain
-SYSTEM_PROMPT = """You are an expert assistant for timber construction tools and hardware.
-Use the following pieces of context from technical catalogs to answer the question.
+# Custom prompt template for the RAG chain
+SYSTEM_PROMPT = """You are an expert technical assistant for timber construction tools and hardware.
+Use the following pieces of context from technical catalogs to answer the question. 
+The context may contain tables with technical specifications (shear force, dimensions, distances).
+Pay close attention to these values.
+
 If you don't know the answer based on the context, say so clearly instead of making something up.
 
 Context:
@@ -25,7 +29,7 @@ Context:
 
 Question: {question}
 
-Provide a detailed and accurate answer without including source information or page references.
+Provide a detailed and accurate answer. If the answer comes from a table, explicitly state the values for the requested parameters (e.g. specific diameter, length, angle).
 Answer:"""
 
 
@@ -58,10 +62,10 @@ def create_rag_chain(
 
     try:
         # Initialize LLM
+        # Note: GPT-5 mini only supports temperature=1
         llm = ChatOpenAI(
             model_name=llm_model,
-            temperature=temperature,
-            max_tokens=LLM_MAX_TOKENS,
+            temperature=1,  # GPT-5 mini only supports default temperature
             streaming=False
         )
 

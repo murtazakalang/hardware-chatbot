@@ -13,14 +13,14 @@ COLLECTION_NAME = "timber_tools_catalog"
 EMBEDDING_MODEL = "text-embedding-ada-002"
 
 # PDF Processing Configuration
-CHUNK_SIZE = 1000
+CHUNK_SIZE = 1200
 CHUNK_OVERLAP = 200
 
 # RAG Pipeline Configuration
-LLM_MODEL = "gpt-4"
+LLM_MODEL = "gpt-5-mini"
 LLM_TEMPERATURE = 0.1
 LLM_MAX_TOKENS = 1000
-TOP_K_RESULTS = 5
+TOP_K_RESULTS = 10
 
 # Streamlit Configuration
 STREAMLIT_PAGE_TITLE = "Hardware Chatbot"
